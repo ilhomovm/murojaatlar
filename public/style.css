@@ -1,0 +1,611 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --deep-blue: #0d2137;
+  --blue-dark: #1e3a5f;
+  --blue: #2c5282;
+  --blue-light: #3182ce;
+  --blue-pale: #63b3ed;
+  --bg: #eef3f9;
+  --border: #d4e0ed;
+  --muhim: #dc2626;
+  --hafta1: #2563eb;
+  --hafta2: #059669;
+  --hafta3: #7c3aed;
+}
+
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--deep-blue);
+  min-height: 100vh;
+  line-height: 1.5;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+}
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #1e3a5f 0%, #152a45 100%);
+  min-height: 100vh;
+  padding: 1.5rem 0;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-clock {
+  padding: 1rem 1.5rem;
+  margin: 0 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.sidebar-clock #clock-time {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar-clock #clock-date {
+  display: block;
+  font-size: 13px;
+  color: var(--blue-pale);
+  margin-top: 0.35rem;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidebar-link {
+  padding: 0.9rem 1.5rem;
+  border: none;
+  background: none;
+  color: var(--blue-pale);
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 600;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.sidebar-link.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-right: 4px solid var(--blue-pale);
+}
+
+.main-content {
+  flex: 1;
+  max-width: 1400px;
+  padding: 2.5rem 2rem;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.content-section {
+  display: none;
+}
+
+.content-section.active {
+  display: block;
+}
+
+/* Widgetlar - zamonaviy kartochkalar */
+.widgetlar {
+  display: grid;
+  margin-bottom: 2.5rem;
+  grid-template-columns: repeat(4, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  min-height: 140px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: #fff;
+  font-weight: 700;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.widget[data-filter="muhim"] {
+  background: linear-gradient(145deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+}
+.widget[data-filter="1_hafta"] {
+  background: linear-gradient(145deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+}
+.widget[data-filter="2_hafta"] {
+  background: linear-gradient(145deg, #10b981 0%, #059669 50%, #047857 100%);
+}
+.widget[data-filter="3_hafta"] {
+  background: linear-gradient(145deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
+}
+
+.widget:hover {
+  transform: translateY(-8px) scale(1.02);
+}
+
+.widget:hover[data-filter="muhim"] {
+  box-shadow: 0 20px 40px rgba(220, 38, 38, 0.4);
+}
+.widget:hover[data-filter="1_hafta"] {
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.4);
+}
+.widget:hover[data-filter="2_hafta"] {
+  box-shadow: 0 20px 40px rgba(5, 150, 105, 0.4);
+}
+.widget:hover[data-filter="3_hafta"] {
+  box-shadow: 0 20px 40px rgba(124, 58, 237, 0.4);
+}
+
+.widget.active {
+  outline: 3px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 3px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.widget-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  backdrop-filter: blur(8px);
+}
+
+.widget-title {
+  font-size: 17px;
+  letter-spacing: 0.03em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.add-form {
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.add-form h2,
+.list h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--blue);
+  margin-bottom: 0.75rem;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--deep-blue);
+  font-size: 17px;
+  font-weight: 500;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.btn {
+  padding: 0.85rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: var(--blue-dark);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--deep-blue);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--blue);
+}
+
+.btn-danger:hover {
+  color: #c53030;
+}
+
+.btn-small {
+  padding: 0.5rem 0.75rem;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.list h2 {
+  margin-bottom: 0.5rem;
+}
+
+.item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+#murojaatlar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#murojaatlar-list .item {
+  padding: 1.25rem 1.5rem;
+  gap: 1.25rem;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-left: 5px solid #94a3b8;
+  border-right: 5px solid #94a3b8;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 12px rgba(13, 33, 55, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+#murojaatlar-list .item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(13, 33, 55, 0.15);
+}
+
+#murojaatlar-list .item.muhim-item {
+  border-left: 5px solid #dc2626;
+  border-right: 5px solid #dc2626;
+}
+
+#eslatmalar-list .item {
+  padding: 1.25rem 1.5rem;
+  gap: 1.25rem;
+  align-items: flex-end;
+  background: #fff;
+  border-radius: 14px;
+  border-bottom: none;
+  border-top: none;
+  border-left: 6px solid #dc2626;
+  border-right: 6px solid #dc2626;
+  box-shadow: 0 2px 12px rgba(13, 33, 55, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#eslatmalar-list .item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 20px rgba(13, 33, 55, 0.12);
+}
+
+#eslatmalar-list .item.bajarildi {
+  border-left: 6px solid #15803d;
+  border-right: 6px solid #15803d;
+  opacity: 0.9;
+}
+
+#eslatmalar-list .item-content h3 {
+  font-size: 20px;
+  color: var(--deep-blue);
+}
+
+#eslatmalar-list .item-content p {
+  font-size: 17px;
+  color: var(--blue);
+}
+
+#murojaatlar-list .item-content h3,
+#eslatmalar-list .item-content h3 {
+  font-size: 19px;
+  font-weight: 600;
+}
+
+#murojaatlar-list .item-content p,
+#eslatmalar-list .item-content p {
+  font-size: 17px;
+  margin-top: 0.35rem;
+}
+
+#murojaatlar-list .item-meta,
+#eslatmalar-list .item-meta {
+  font-size: 16px;
+  margin-top: 0.4rem;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+#eslatmalar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#savat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#savat-list .item {
+  padding: 1.25rem 1.5rem;
+  gap: 1.25rem;
+  align-items: flex-end;
+  background: #fff;
+  border-radius: 14px;
+  border-left: 6px solid #94a3b8;
+  border-right: 6px solid #94a3b8;
+  box-shadow: 0 2px 12px rgba(13, 33, 55, 0.08);
+}
+
+#savat-list .item-actions {
+  margin-top: 1rem;
+}
+
+.item.bajarildi .item-content h3 {
+  text-decoration: line-through;
+  color: var(--blue);
+}
+
+.item-content h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--deep-blue);
+}
+
+.item-content p {
+  color: var(--blue);
+  font-size: 16px;
+  font-weight: 500;
+  margin-top: 0.2rem;
+}
+
+.item-meta {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--blue-light);
+  margin-top: 0.25rem;
+}
+
+.item-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+#eslatmalar-list .item-actions {
+  margin-top: 0;
+}
+
+.item-actions select {
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0;
+  min-width: 140px;
+}
+
+/* Eslatma status - qizil/yashil, bosilganda animatsiya */
+#eslatmalar-list .eslatma-status {
+  min-width: 150px;
+  padding: 0.6rem 1rem;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.35s ease, color 0.35s ease, box-shadow 0.35s ease, transform 0.15s;
+}
+
+#eslatmalar-list .eslatma-status:hover {
+  transform: scale(1.02);
+}
+
+#eslatmalar-list .eslatma-status:active {
+  transform: scale(0.96);
+}
+
+@keyframes eslatma-status-pop {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.15); }
+  50% { transform: scale(0.95); }
+  75% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+#eslatmalar-list .eslatma-status.eslatma-status-click {
+  animation: eslatma-status-pop 0.5s ease;
+}
+
+#eslatmalar-list .eslatma-status.bajarilmagan {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+}
+
+#eslatmalar-list .eslatma-status.bajarildi {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+}
+
+.empty {
+  color: var(--blue);
+  padding: 2rem 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.holat-badge {
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.holat-kutilmoqda { color: #b45309; }
+.holat-qabul_qilindi { color: var(--blue-light); }
+.holat-bajarildi { color: #15803d; }
+.muhim-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.muhim-btn {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+.muhim-btn.muhim {
+  background: #dc2626;
+  color: #fff;
+}
+.muhim-btn:hover {
+  opacity: 0.9;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--deep-blue);
+}
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+/* FAB - Yangi eslatma tugmasi */
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--blue-dark);
+  color: #fff;
+  font-size: 28px;
+  font-weight: 300;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(30, 58, 95, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 24px rgba(30, 58, 95, 0.5);
+}
+
+.fab .fab-label {
+  display: none;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 16px;
+  max-width: 420px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h2 {
+  margin-bottom: 1.25rem;
+  font-size: 1.25rem;
+  color: var(--deep-blue);
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--blue);
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: var(--deep-blue);
+}
+
+#eslatma-form input,
+#eslatma-form textarea {
+  margin-bottom: 0.75rem;
+}
+
+#murojaat-form {
+  display: flex;
+  flex-direction: column;
+}
+#murojaat-form .btn-primary {
+  align-self: flex-end;
+}

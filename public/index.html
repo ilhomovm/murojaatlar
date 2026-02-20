@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Murojaatlar</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-clock">
+      <span id="clock-time">00:00:00</span>
+      <span id="clock-date"></span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="sidebar-link active" data-tab="murojaatlar">Murojaatlar</button>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <!-- Murojaatlar bo'limi -->
+    <section id="murojaatlar-section" class="content-section active">
+      <div class="widgetlar">
+        <a href="javascript:void(0)" class="widget" data-filter="muhim" onclick="widgetBosildi('muhim')">
+          <span class="widget-icon">!</span>
+          <span class="widget-title">Muhim</span>
+        </a>
+        <a href="javascript:void(0)" class="widget" data-filter="1_hafta" onclick="widgetBosildi('1_hafta')">
+          <span class="widget-icon">1</span>
+          <span class="widget-title">1 haftalik</span>
+        </a>
+        <a href="javascript:void(0)" class="widget" data-filter="2_hafta" onclick="widgetBosildi('2_hafta')">
+          <span class="widget-icon">2</span>
+          <span class="widget-title">2 haftalik</span>
+        </a>
+        <a href="javascript:void(0)" class="widget" data-filter="3_hafta" onclick="widgetBosildi('3_hafta')">
+          <span class="widget-icon">3</span>
+          <span class="widget-title">3 haftalik</span>
+        </a>
+      </div>
+      <div class="list">
+        <div id="murojaatlar-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <button type="button" class="fab" id="fab-add" title="Qo'shish">
+    <span class="fab-icon">+</span>
+    <span class="fab-label">Qo'shish</span>
+  </button>
+
+  <div id="modal-murojaat" class="modal hidden">
+    <div class="modal-content">
+      <span class="modal-close" id="modal-murojaat-close">&times;</span>
+      <h2>Yangi murojaat</h2>
+      <form id="murojaat-form">
+        <input type="text" name="sarlavha" placeholder="Sarlavha" required>
+        <textarea name="matn" placeholder="Matn" rows="3"></textarea>
+        <input type="date" name="sana">
+        <label class="checkbox-label">
+          <input type="checkbox" name="muhim" value="1">
+          Muhim
+        </label>
+        <button type="submit" class="btn btn-primary">Qo'shish</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
