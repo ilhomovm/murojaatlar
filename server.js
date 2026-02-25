@@ -12,36 +12,90 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Murojaatlar fayli
-const MUROJATLAR_FILE = path.join(__dirname, 'murojatlar', 'murojatlar.json');
+// Murojaatlar papkasi va eski umumiy fayl
+const MUROJATLAR_DIR = path.join(__dirname, 'murojatlar');
+const LEGACY_MUROJATLAR_FILE = path.join(MUROJATLAR_DIR, 'murojatlar.json');
 
-// Murojaatlar (murojatlar/1_hafta.json)
-function readMurojaatlar() {
+function ensureMurojaatlarDir() {
+  if (!fs.existsSync(MUROJATLAR_DIR)) fs.mkdirSync(MUROJATLAR_DIR, { recursive: true });
+}
+
+function getMurojaatFilePath(id) {
+  return path.join(MUROJATLAR_DIR, `${id}.json`);
+}
+
+function migrateLegacyFileIfNeeded() {
+  ensureMurojaatlarDir();
+  if (!fs.existsSync(LEGACY_MUROJATLAR_FILE)) return;
+
+  const itemFiles = fs.readdirSync(MUROJATLAR_DIR).filter(name => name.endsWith('.json') && name !== 'murojatlar.json');
+  if (itemFiles.length > 0) return;
+
   try {
-    const dir = path.dirname(MUROJATLAR_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    if (!fs.existsSync(MUROJATLAR_FILE)) {
-      writeMurojaatlar([]);
-      return [];
-    }
-    const raw = fs.readFileSync(MUROJATLAR_FILE, 'utf8').trim();
-    if (!raw) return [];
+    const raw = fs.readFileSync(LEGACY_MUROJATLAR_FILE, 'utf8').trim();
+    if (!raw) return;
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed;
-    if (parsed && Array.isArray(parsed.murojaatlar)) return parsed.murojaatlar;
-    return [];
+    const legacyItems = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.murojaatlar) ? parsed.murojaatlar : []);
+    legacyItems.forEach((item) => {
+      if (!item || item.id === undefined || item.id === null) return;
+      fs.writeFileSync(getMurojaatFilePath(item.id), JSON.stringify(item, null, 2));
+    });
+  } catch (err) {
+    // Eski fayl noto'g'ri bo'lsa ham API ishlashda davom etadi.
+  }
+}
+
+function readMurojaatlar() {
+  ensureMurojaatlarDir();
+  migrateLegacyFileIfNeeded();
+
+  try {
+    const files = fs.readdirSync(MUROJATLAR_DIR).filter(name => name.endsWith('.json') && name !== 'murojatlar.json');
+    const items = [];
+
+    files.forEach((fileName) => {
+      try {
+        const fullPath = path.join(MUROJATLAR_DIR, fileName);
+        const raw = fs.readFileSync(fullPath, 'utf8').trim();
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          items.push(parsed);
+        }
+      } catch (err) {
+        // Noto'g'ri bitta fayl umumiy ro'yxatni buzmasin.
+      }
+    });
+
+    return items.sort((a, b) => {
+      const at = a && a.yaratilgan ? new Date(a.yaratilgan).getTime() : 0;
+      const bt = b && b.yaratilgan ? new Date(b.yaratilgan).getTime() : 0;
+      return bt - at;
+    });
   } catch (err) {
     return [];
   }
 }
 
-function writeMurojaatlar(arr) {
-  const dir = path.dirname(MUROJATLAR_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(MUROJATLAR_FILE, JSON.stringify(arr, null, 2));
+function readMurojaatById(id) {
+  const filePath = getMurojaatFilePath(id);
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    const raw = fs.readFileSync(filePath, 'utf8').trim();
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+  } catch (err) {
+    return null;
+  }
 }
 
-// ============ MUROJAATLAR API (murojatlar.json) ============
+function writeMurojaat(item) {
+  ensureMurojaatlarDir();
+  fs.writeFileSync(getMurojaatFilePath(item.id), JSON.stringify(item, null, 2));
+}
+
+// ============ MUROJAATLAR API (har bir murojaat alohida .json) ============
 
 // Hammasini olish
 app.get('/api/murojaatlar', (req, res) => {
@@ -51,8 +105,6 @@ app.get('/api/murojaatlar', (req, res) => {
 
 // Yangi qo'shish
 app.post('/api/murojaatlar', (req, res) => {
-  let murojaatlar = readMurojaatlar();
-  if (!Array.isArray(murojaatlar)) murojaatlar = [];
   const now = new Date();
   const murojaat = {
     id: Date.now(),
@@ -63,25 +115,24 @@ app.post('/api/murojaatlar', (req, res) => {
     yaratilgan: now.toISOString(),
     kiritilganVaqt: now.toLocaleTimeString('uz-UZ', { hour12: false })
   };
-  murojaatlar.push(murojaat);
-  writeMurojaatlar(murojaatlar);
+  writeMurojaat(murojaat);
   res.json(murojaat);
 });
 
 // Yangilash
 app.put('/api/murojaatlar/:id', (req, res) => {
-  const murojaatlar = readMurojaatlar() || [];
-  const idx = murojaatlar.findIndex(m => m.id == req.params.id);
-  if (idx === -1) return res.status(404).json({ xato: 'Topilmadi' });
-  murojaatlar[idx] = { ...murojaatlar[idx], ...req.body };
-  writeMurojaatlar(murojaatlar);
-  res.json(murojaatlar[idx]);
+  const oldItem = readMurojaatById(req.params.id);
+  if (!oldItem) return res.status(404).json({ xato: 'Topilmadi' });
+
+  const updated = { ...oldItem, ...req.body, id: oldItem.id };
+  writeMurojaat(updated);
+  res.json(updated);
 });
 
 // O'chirish
 app.delete('/api/murojaatlar/:id', (req, res) => {
-  const murojaatlar = (readMurojaatlar() || []).filter(m => m.id != req.params.id);
-  writeMurojaatlar(murojaatlar);
+  const filePath = getMurojaatFilePath(req.params.id);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   res.json({ oqibat: 'o\'chirildi' });
 });
 
