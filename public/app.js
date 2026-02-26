@@ -22,22 +22,40 @@ function escapeHtml(t) {
   return div.innerHTML;
 }
 
-function formatDateForApi(dateValue) {
+function bugungiVaqt() {
+  return new Date().toLocaleTimeString('uz-UZ', { hour12: false });
+}
+
+function normalizeTimeInput(timeValue) {
+  if (!timeValue) return bugungiVaqt();
+  if (/^\d{2}:\d{2}$/.test(timeValue)) return `${timeValue}:00`;
+  return timeValue;
+}
+
+function formatDateForApi(dateValue, timeValue) {
   if (!dateValue) return '';
   const isoDate = /^(\d{4})-(\d{2})-(\d{2})$/;
   const m = dateValue.match(isoDate);
-  if (!m) return dateValue;
+  const normalizedTime = normalizeTimeInput(timeValue);
+  if (!m) return `${dateValue} ${normalizedTime}`.trim();
   const [, y, mo, d] = m;
-  return `${d}.${mo}.${y}`;
+  return `${d}.${mo}.${y} ${normalizedTime}`;
 }
 
 function normalizeMurojaat(item) {
   const matn = item.matn ?? item.mazmun ?? '';
-  const sana = item.sana ?? (typeof item.vaqt === 'string' ? item.vaqt : '');
+  const uzDateTimeMatch = typeof item.vaqt === 'string'
+    ? item.vaqt.match(/^(\d{2}\.\d{2}\.\d{4})(?:\s+(\d{2}:\d{2}(?::\d{2})?))?$/)
+    : null;
+  const sanaFromVaqt = uzDateTimeMatch ? uzDateTimeMatch[1] : '';
+  const vaqtFromVaqt = uzDateTimeMatch && uzDateTimeMatch[2] ? normalizeTimeInput(uzDateTimeMatch[2]) : '';
+  const sana = item.sana ?? sanaFromVaqt ?? (typeof item.vaqt === 'string' ? item.vaqt : '');
+  const kiritilganVaqt = item.kiritilganVaqt ?? vaqtFromVaqt;
   return {
     ...item,
     matn,
     sana,
+    kiritilganVaqt,
     muhim: !!item.muhim,
     bajarilgan: !!item.bajarilgan
   };
@@ -47,10 +65,17 @@ function murojaatMaqsadVaqtiniOlish(m) {
   const vaqtOnly = /^\d{2}:\d{2}(:\d{2})?$/;
   const vaqtToliq = m.vaqt && /\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(m.vaqt);
   const vaqtSanaUZ = m.vaqt && /^(\d{2})\.(\d{2})\.(\d{4})$/.test(m.vaqt);
+  const vaqtSanaVaqtUZ = m.vaqt && /^(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}:\d{2}(?::\d{2})?)$/.test(m.vaqt);
 
   if (vaqtToliq) {
     const d = new Date(m.vaqt);
     return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  if (vaqtSanaVaqtUZ) {
+    const [, d, mo, y, t] = m.vaqt.match(/^(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}:\d{2}(?::\d{2})?)$/) || [];
+    const parsed = new Date(`${y}-${mo}-${d}T${normalizeTimeInput(t)}`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   if (vaqtSanaUZ) {
@@ -244,6 +269,9 @@ fabBtn.addEventListener('click', () => {
   modalMurojaat.classList.remove('hidden');
   murojaatForm.reset();
   murojaatForm.sana.value = new Date().toISOString().slice(0, 10);
+  if (murojaatForm.vaqt) {
+    murojaatForm.vaqt.value = bugungiVaqt();
+  }
 });
 
 document.getElementById('modal-murojaat-close').addEventListener('click', () => modalMurojaat.classList.add('hidden'));
@@ -263,7 +291,10 @@ murojaatForm.addEventListener('submit', async (e) => {
     body: JSON.stringify({
       sarlavha: f.sarlavha.value.trim(),
       mazmun: f.matn.value.trim(),
-      vaqt: formatDateForApi(f.sana.value || new Date().toISOString().slice(0, 10)),
+      vaqt: formatDateForApi(
+        f.sana.value || new Date().toISOString().slice(0, 10),
+        f.vaqt ? f.vaqt.value : bugungiVaqt()
+      ),
       muhim: f.muhim && f.muhim.checked,
       bajarilgan: false
     })
