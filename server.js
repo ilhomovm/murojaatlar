@@ -112,6 +112,7 @@ app.post('/api/murojaatlar', (req, res) => {
     matn: req.body.matn || '',
     sana: req.body.sana || now.toISOString().slice(0, 10),
     muhim: !!req.body.muhim,
+    bajarilgan: !!req.body.bajarilgan,
     yaratilgan: now.toISOString(),
     kiritilganVaqt: now.toLocaleTimeString('uz-UZ', { hour12: false })
   };
