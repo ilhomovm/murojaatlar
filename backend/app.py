@@ -7,10 +7,18 @@ from datetime import datetime
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 
 app = FastAPI(title="Murojaatlar API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -54,12 +62,16 @@ class CreateMurojaatPayload(BaseModel):
     sarlavha: str
     mazmun: str = ""
     vaqt: Optional[str] = None
+    muhim: bool = False
+    bajarilgan: bool = False
 
 
 class UpdateMurojaatPayload(BaseModel):
     sarlavha: Optional[str] = None
     mazmun: Optional[str] = None
     vaqt: Optional[str] = None
+    muhim: Optional[bool] = None
+    bajarilgan: Optional[bool] = None
 
 
 @app.get("/health")
@@ -96,6 +108,8 @@ def create_item(payload: CreateMurojaatPayload) -> dict[str, Any]:
         "sarlavha": sarlavha,
         "mazmun": mazmun,
         "vaqt": vaqt,
+        "muhim": bool(payload.muhim),
+        "bajarilgan": bool(payload.bajarilgan),
     }
     items.append(new_item)
     _write_items(items)
@@ -118,6 +132,10 @@ def update_item(item_id: int, payload: UpdateMurojaatPayload) -> dict[str, Any]:
         item["mazmun"] = (payload_data.get("mazmun") or "").strip()
     if "vaqt" in payload_data:
         item["vaqt"] = (payload_data.get("vaqt") or "").strip()
+    if "muhim" in payload_data:
+        item["muhim"] = bool(payload_data.get("muhim"))
+    if "bajarilgan" in payload_data:
+        item["bajarilgan"] = bool(payload_data.get("bajarilgan"))
 
     if not str(item.get("sarlavha", "")).strip():
         raise HTTPException(status_code=400, detail="sarlavha bosh bolmasligi kerak")

@@ -1,4 +1,4 @@
-const API = '/api';
+const API = 'http://31.97.117.161:6363/api';
 
 // Soat widget
 function soatniYangilash() {
@@ -22,13 +22,41 @@ function escapeHtml(t) {
   return div.innerHTML;
 }
 
+function formatDateForApi(dateValue) {
+  if (!dateValue) return '';
+  const isoDate = /^(\d{4})-(\d{2})-(\d{2})$/;
+  const m = dateValue.match(isoDate);
+  if (!m) return dateValue;
+  const [, y, mo, d] = m;
+  return `${d}.${mo}.${y}`;
+}
+
+function normalizeMurojaat(item) {
+  const matn = item.matn ?? item.mazmun ?? '';
+  const sana = item.sana ?? (typeof item.vaqt === 'string' ? item.vaqt : '');
+  return {
+    ...item,
+    matn,
+    sana,
+    muhim: !!item.muhim,
+    bajarilgan: !!item.bajarilgan
+  };
+}
+
 function murojaatMaqsadVaqtiniOlish(m) {
   const vaqtOnly = /^\d{2}:\d{2}(:\d{2})?$/;
   const vaqtToliq = m.vaqt && /\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(m.vaqt);
+  const vaqtSanaUZ = m.vaqt && /^(\d{2})\.(\d{2})\.(\d{4})$/.test(m.vaqt);
 
   if (vaqtToliq) {
     const d = new Date(m.vaqt);
     return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  if (vaqtSanaUZ) {
+    const [, d, mo, y] = m.vaqt.match(/^(\d{2})\.(\d{2})\.(\d{4})$/) || [];
+    const parsed = new Date(`${y}-${mo}-${d}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   const sanaPart = m.sana || (m.vaqt && /^\d{4}-\d{2}-\d{2}$/.test(m.vaqt) ? m.vaqt : '');
@@ -75,7 +103,7 @@ function filterMurojaatlar(data) {
   const chegara = new Date(now);
   chegara.setDate(chegara.getDate() - kunlar);
   return data.filter(m => {
-    const sana = m.yaratilgan ? new Date(m.yaratilgan) : (m.sana ? new Date(m.sana) : null);
+    const sana = m.yaratilgan ? new Date(m.yaratilgan) : murojaatMaqsadVaqtiniOlish(m);
     return sana && sana >= chegara;
   });
 }
@@ -123,7 +151,8 @@ async function murojaatlarYuklash() {
   const bajarilganList = document.getElementById('bajarilgan-list');
   try {
     const res = await fetch(API + '/murojaatlar');
-    const data = await res.json();
+    const rawData = await res.json();
+    const data = Array.isArray(rawData) ? rawData.map(normalizeMurojaat) : [];
     const faolFiltered = filterMurojaatlar(data).filter((m) => !m.bajarilgan);
     const bajarilgan = data.filter((m) => !!m.bajarilgan);
 
@@ -233,8 +262,8 @@ murojaatForm.addEventListener('submit', async (e) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       sarlavha: f.sarlavha.value.trim(),
-      matn: f.matn.value.trim(),
-      sana: f.sana.value || new Date().toISOString().slice(0, 10),
+      mazmun: f.matn.value.trim(),
+      vaqt: formatDateForApi(f.sana.value || new Date().toISOString().slice(0, 10)),
       muhim: f.muhim && f.muhim.checked,
       bajarilgan: false
     })
