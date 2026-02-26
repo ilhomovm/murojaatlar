@@ -1,4 +1,4 @@
-const API = 'http://31.97.117.161:6363/api';
+const API = 'https://app-market.uz/api';
 
 // Soat widget
 function soatniYangilash() {
